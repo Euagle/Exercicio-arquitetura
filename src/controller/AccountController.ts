@@ -1,0 +1,134 @@
+import { Account } from "../models/Account"
+import { Request, Response } from "express"
+import { AccountDB } from "../types"
+import { AccountDatabase } from "../database/AccountDatabase"
+import { AccountBusiness } from "../business/AccountBusiness"
+
+
+
+export class AccountController {
+    public editAccount = async(req: Request, res: Response)=>{
+        try {
+            const id = req.params.id
+            const value = req.body.value
+    
+            if (typeof value !== "number") {
+                res.status(400)
+                throw new Error("'value' deve ser number")
+            }
+    
+            const accountDatabase = new AccountDatabase()
+            const accountDB = await accountDatabase.findAccountById(id)
+    
+            if (!accountDB) {
+                res.status(404)
+                throw new Error("'id' não encontrado")
+            }
+    
+            const account = new Account(
+                accountDB.id,
+                accountDB.balance,
+                accountDB.owner_id,
+                accountDB.created_at
+            )
+    
+            const newBalance = account.getBalance() + value
+            account.setBalance(newBalance)
+    
+            await accountDatabase.updateBalanceById(id, newBalance)
+            
+            res.status(200).send(account)
+        } catch (error) {
+            console.log(error)
+    
+            if (req.statusCode === 200) {
+                res.status(500)
+            }
+    
+            if (error instanceof Error) {
+                res.send(error.message)
+            } else {
+                res.send("Erro inesperado")
+            }
+        }
+    }
+    public getAccount = async(req: Request, res: Response)=>{
+
+    try {
+       
+        const accountBusiness = new AccountBusiness()
+
+        const output = await accountBusiness.getAccounts()
+
+        res.status(200).send(output)
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+
+    } 
+    public getAccountId = async(req: Request, res: Response)=>{
+
+     try {
+        const id = req.params.id
+
+        const accountBusiness = new AccountBusiness()
+
+        const output = await accountBusiness.getAccountBalance(id)
+        
+
+        res.status(200).send({ output })
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+
+
+} 
+public postAccount = async(req: Request, res: Response)=>{
+
+try {
+    const { id, ownerId } = req.body
+    const input={id, ownerId }
+
+
+    const accountBusiness = new AccountBusiness()
+
+    const output = await accountBusiness.getAccountBalance(input)
+    
+    
+
+    res.status(201).send(output)
+} catch (error) {
+    console.log(error)
+
+    if (req.statusCode === 200) {
+        res.status(500)
+    }
+
+    if (error instanceof Error) {
+        res.send(error.message)
+    } else {
+        res.send("Erro inesperado")
+    }
+}
+}
+}
